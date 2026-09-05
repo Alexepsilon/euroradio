@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Euro Radio</title>
+<style>
+  :root {
+    --bg:#0b0d12; --panel:#141821; --panel2:#1b2130; --line:#262d3d;
+    --text:#e8ecf3; --muted:#8b94a8; --accent:#35e0b0; --accent2:#7c5cff; --danger:#ff5c7a; --star:#ffcf4a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,"Segoe UI",Roboto,sans-serif}
+  header{padding:18px 24px 8px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  header h1{margin:0;font-size:22px} header h1 span{color:var(--accent)}
+  header p{margin:0;color:var(--muted);font-size:13px}
+  nav{display:flex;gap:4px;padding:6px 24px 0;border-bottom:1px solid var(--line)}
+  nav .tab{padding:9px 16px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:600;user-select:none}
+  nav .tab.on{color:var(--text);border-color:var(--accent)}
+  .rows{padding:10px 24px 0;display:flex;flex-direction:column;gap:8px}
+  .row{display:flex;gap:6px;align-items:center;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+  .row .lbl{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px;flex:0 0 62px}
+  .chip{background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:5px 11px;border-radius:999px;cursor:pointer;font-size:13px;user-select:none;white-space:nowrap;flex:0 0 auto}
+  .chip:hover{border-color:var(--accent2);color:var(--text)}
+  .chip.on{color:var(--bg);background:var(--accent);border-color:var(--accent);font-weight:600}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 24px 4px}
+  .bar input,.bar select{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:8px 12px;border-radius:8px;font-size:14px;outline:none}
+  .bar input{flex:1 1 220px} .bar input:focus{border-color:var(--accent)}
+  .bar .info{color:var(--muted);font-size:13px}
+  .bar .info b{color:var(--text)}
+  main{padding:8px 24px 150px}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin:18px 0 8px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;gap:12px;align-items:center;transition:border-color .15s,background .15s;position:relative}
+  .card:hover{border-color:var(--accent2);background:var(--panel2)}
+  .card.active{border-color:var(--accent);background:#16261f}
+  .card.dead{opacity:.45}
+  .logo{width:44px;height:44px;border-radius:10px;flex:0 0 44px;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff;overflow:hidden;background:var(--panel2)}
+  .logo img{width:100%;height:100%;object-fit:cover}
+  .meta{min-width:0;flex:1;padding-right:36px}
+  .name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tags{font-size:11.5px;color:#6b7590;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acts{position:absolute;top:6px;right:8px;display:flex;flex-direction:column;gap:2px;align-items:flex-end}
+  .fav,.hide{color:var(--line);font-size:16px;line-height:1.1;padding:2px 3px}
+  .fav.on{color:var(--star)} .card:hover .fav,.card:hover .hide{color:var(--muted)} .card:hover .fav.on{color:var(--star)}
+  .hide{font-size:13px} .hide:hover{color:var(--danger)!important}
+  .eq{display:inline-flex;gap:2px;align-items:flex-end;height:14px;margin-left:6px;vertical-align:middle}
+  .eq i{width:3px;background:var(--accent);animation:eq .8s ease-in-out infinite;border-radius:1px}
+  .eq i:nth-child(2){animation-delay:.2s}.eq i:nth-child(3){animation-delay:.4s}
+  @keyframes eq{0%,100%{height:4px}50%{height:14px}}
+  .empty{color:var(--muted);padding:40px 0;text-align:center}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle;margin-right:8px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .more{display:block;margin:18px auto 0;background:var(--panel);border:1px solid var(--line);color:var(--text);padding:9px 20px;border-radius:8px;cursor:pointer}
+  footer{position:fixed;left:0;right:0;bottom:0;background:#10131bf2;backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .btn{width:52px;height:52px;border-radius:50%;border:none;background:var(--accent);color:var(--bg);font-size:20px;cursor:pointer;display:grid;place-items:center;flex:0 0 52px}
+  .btn:disabled{background:var(--line);color:var(--muted);cursor:default}
+  .now{flex:1 1 200px;min-width:0}
+  .now .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .now .s{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .now .s.err{color:var(--danger)}
+  .vol{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+  .vol input{width:130px;accent-color:var(--accent)}
+  a.site{color:var(--muted);font-size:12px;text-decoration:none} a.site:hover{color:var(--accent)}
+  .small{background:none;border:1px solid var(--line);color:var(--muted);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px}
+  .small:hover{color:var(--text);border-color:var(--accent2)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Euro <span>Radio</span> <small style="font-size:13px;color:var(--muted);font-weight:400">· world edition</small></h1>
+  <p>Space = play/pause · ↑↓ volume · ← → previous/next station · Stations from the community Radio Browser database</p>
+</header>
+<nav>
+  <div class="tab on" data-t="browse">Browse</div>
+  <div class="tab" data-t="lv">Curated Latvia</div>
+  <div class="tab" data-t="fav">★ Favourites</div>
+  <div class="tab" data-t="recent">Recent</div>
+</nav>
+<div class="rows" id="browseRows">
+  <div class="row"><span class="lbl">Region</span><div id="regions" style="display:contents"></div></div>
+  <div class="row"><span class="lbl">Country</span><div id="countries" style="display:contents"></div></div>
+  <div class="row"><span class="lbl">Style</span><div id="styles" style="display:contents"></div></div>
+</div>
+<div class="bar" id="browseBar">
+  <input id="q" type="search" placeholder="Search station name… (Enter)" autocomplete="off">
+  <select id="sort"><option value="votes">Most popular</option><option value="clickcount">Most listened</option><option value="bitrate">Best quality</option><option value="name">Name A–Z</option></select>
+  <span class="info" id="info"></span>
+  <button class="small" id="clearHidden" hidden>Unhide stations</button>
+</div>
+<main id="list"></main>
+<footer>
+  <button class="btn" id="play" disabled>▶</button>
+  <div class="now"><div class="t" id="nowT">Nothing playing</div><div class="s" id="nowS">Pick a station</div></div>
+  <a class="site" id="site" href="#" target="_blank" rel="noopener" hidden>Website ↗</a>
+  <div class="vol">🔊 <input id="vol" type="range" min="0" max="1" step="0.02" value="0.8"><span id="volv">80%</span></div>
+</footer>
+<audio id="a" preload="none"></audio>
+
+<script>
+/* ---------- data ---------- */
+const REGIONS = [
+  ["EU","🇪🇺","Europe","AL AD AT BY BE BA BG HR CY CZ DK EE FO FI FR DE GI GR GG HU IS IE IM IT JE XK LV LI LT LU MT MD MC ME NL MK NO PL PT RO RU SM RS SK SI ES SJ SE CH UA GB VA AX"],
+  ["NA","🌎","North America","US CA MX GL BM PM"],
+  ["CA","🏝️","Caribbean & Central America","AG AI AW BB BL BQ BS BZ CR CU CW DM DO GD GP GT HN HT JM KN KY LC MF MQ MS NI PA PR SV SX TC TT VC VG VI"],
+  ["SA","🌎","South America","AR BO BR CL CO EC FK GF GY PE PY SR UY VE"],
+  ["ME","🕌","Middle East","AE BH EG IL IQ IR JO KW LB OM PS QA SA SY TR YE"],
+  ["AS","🌏","Asia","AF AM AZ BD BT BN KH CN GE HK IN ID JP KZ KG LA MO MY MV MN MM NP KP KR PK PH SG LK TW TJ TH TL TM UZ VN"],
+  ["AF","🌍","Africa","DZ AO BJ BW BF BI CV CM CF TD KM CG CD CI DJ GQ ER SZ ET GA GM GH GN GW KE LS LR LY MG MW ML MR MU YT MA MZ NA NE NG RE RW SH ST SN SC SL SO ZA SS SD TZ TG TN UG EH ZM ZW"],
+  ["OC","🌏","Oceania","AS AU CK FJ PF GU KI MH FM NR NC NZ NU NF MP PW PG PN WS SB TK TO TV UM VU WF"],
+  ["WORLD","🌐","Whole world",""],
+];
+const REGION_OF = {}; REGIONS.forEach(r=>r[3].split(" ").filter(Boolean).forEach(c=>REGION_OF[c]=r[0]));
+let COUNTRY_COUNTS = {};           // cc -> station count, from the API
+const DN = (()=>{ try { return new Intl.DisplayNames(["en"],{type:"region"}); } catch { return null; } })();
+const flag = c => c && /^[A-Z]{2}$/.test(c) ? String.fromCodePoint(...[...c].map(ch=>0x1F1E6+ch.charCodeAt(0)-65)) : "🏳️";
+const cname = c => { if (!c) return ""; try { return DN ? DN.of(c) : c; } catch { return c; } };
+const regionCountries = r => Object.keys(COUNTRY_COUNTS).filter(c => r==="WORLD" ? true : REGION_OF[c]===r).sort((a,b)=>cname(a).localeCompare(cname(b)));
+async function loadCountries(){
+  const c = store("countries",null);
+  if (c && Date.now()-c.t < 24*3600e3) { COUNTRY_COUNTS = c.d; return; }
+  for (const host of HOSTS) {
+    try { const r = await fetch("https://"+host+"/json/countries"); const d = await r.json(); const m = {};
+      d.forEach(x=>{ const code=(x.iso_3166_1||"").toUpperCase(); if (/^[A-Z]{2}$/.test(code) && x.stationcount>=3 && REGION_OF[code]) m[code]=x.stationcount; });
+      if (Object.keys(m).length>50) { COUNTRY_COUNTS = m; save("countries",{t:Date.now(),d:m}); return; } } catch {}
+  }
+  // offline fallback: a minimal list so the UI still works
+  COUNTRY_COUNTS = {}; "LV EE LT FI SE NO DK DE NL BE FR GB IE ES PT IT CH AT PL CZ US CA BR MX JP AU".split(" ").forEach(c=>COUNTRY_COUNTS[c]=1);
+}
+const STYLES = [
+  ["all","All styles",[]],
+  ["edm","EDM",["edm","dance"]],
+  ["house","House",["house"]],
+  ["techno","Techno",["techno"]],
+  ["trance","Trance",["trance"]],
+  ["dnb","Drum & Bass",["drum and bass","dnb","drum & bass","jungle"]],
+  ["electronic","Electronic",["electro"]],
+  ["chill","Chill / Lounge",["chillout","lounge","ambient","downtempo","chill"]],
+  ["hits","Hits / Pop",["top 40","hits"]],
+  ["rock","Rock",["rock"]],
+  ["jazz","Jazz / Soul",["jazz","soul","funk"]],
+  ["hiphop","Hip-hop / R&B",["hip hop","hiphop","rnb","r&b","rap"]],
+];
+const CURATED_LV = [
+  {g:"EDM / Dance",n:"TEV Dance",d:"Radio TEV dance channel (Skonto Media)",u:"https://streams.radiotev.lv:8443/dance",w:"https://www.radiotev.lv"},
+  {g:"EDM / Dance",n:"EHR Dance",d:"European Hit Radio · best European dance hits",u:"https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_DANCEAAC.aac",w:"https://www.ehr.fm"},
+  {g:"EDM / Dance",n:"EHR Party Service",d:"European Hit Radio · club atmosphere, electro",u:"https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_PARTY_SERVICEAAC.aac",w:"https://www.ehr.fm"},
+  {g:"EDM / Dance",n:"EHR Ice Ice Party",d:"European Hit Radio · dance super-hits",u:"https://playerservices.streamtheworld.com/api/livestream-redirect/SUPERHITS_SUPER_DANCE.mp3",w:"https://www.ehr.fm"},
+  {g:"EDM / Dance",n:"EHR Festivālu Hiti",d:"European Hit Radio · festival anthems",u:"https://stream.ehrhiti.lv:8000/Stream_73.mp3",w:"https://www.ehr.fm"},
+  {g:"EDM / Dance",n:"EHR Latviešu Deju Hiti",d:"European Hit Radio · Latvian dance hits",u:"https://playerservices.streamtheworld.com/api/livestream-redirect/LATVIESU_HITI_DEJU_HITI.mp3",w:"https://www.ehr.fm"},
+  {g:"EDM / Dance",n:"DSRadio.lv",d:"Dance Station Radio · trance, tech house, DnB",u:"https://listen4.myradio24.com/97045",w:"https://www.dsradio.lv"},
+  {g:"EDM / Dance",n:"Radio SWH Spin",d:"SWH dance / electronic channel",u:"https://live.radioswh.lv:8443/spinmp3",w:"https://play.radioswh.lv"},
+  {g:"EDM / Dance",n:"NewDanceRadio",d:"Dance, eurodance, house, trance",u:"https://stream.newdanceradio.lv/mp3_192",w:""},
+  {g:"EDM / Dance",n:"gradio.lv ONE",d:"Eurodance, hands up, hard dance, house",u:"https://stream.gradio.lv/gradio-one.mp4a",w:"https://gradio.lv"},
+  {g:"EDM / Dance",n:"Mix FM Drum'n'Bass",d:"Mix FM 102.7 online DnB channel",u:"https://my.radioprocessor.com:8100/mixfm8-48.aac",w:"https://mixfm.lv"},
+  {g:"EDM / Dance",n:"Xradio",d:"Riga · dance & electronic",u:"https://radio.xradio.vip/stream",w:""},
+  {g:"EDM / Dance",n:"Power FM",d:"Dance / club",u:"http://radio.powerfm.lv:8000/;stream.mp3",w:""},
+  {g:"EDM / Dance",n:"Hero Radio",d:"Latvian online dance station",u:"https://a2.asurahosting.com:6790/latvia.mp3",w:""},
+  {g:"EDM / Dance",n:"Radio Talsi · Electronic",d:"Talsi · electronic, 320 kbps",u:"http://kuums.lv:6555/;",w:"http://radio.kuums.lv"},
+  {g:"EDM / Dance",n:"Radio Talsi · Future",d:"Talsi · future / electronic, 320 kbps",u:"http://kuums.lv:7555/;",w:"http://radio.kuums.lv"},
+  {g:"EDM / Dance",n:"Njoy Radio",d:"Riga · club & dance pop",u:"https://live.njoyradio.lv/02",w:""},
+  {g:"EDM / Dance",n:"Your City Radio",d:"Afro house, disco, funk, chillout",u:"https://c34.radioboss.fm:8234/stream",w:"https://yourcityradio.com"},
+  {g:"FM stations with dance rotation",n:"TOP Radio",d:"FM nationwide · pop, dance & electronic hits",u:"https://topradio.live.advailo.com/topradio/mp3/icecast.audio",w:"https://tv3.lv/topradio/"},
+  {g:"FM stations with dance rotation",n:"European Hit Radio",d:"FM nationwide · chart dance-pop",u:"https://playerservices.streamtheworld.com/api/livestream-redirect/EHRAAC.aac",w:"https://www.ehr.fm"},
+  {g:"FM stations with dance rotation",n:"Mix FM 102.7",d:"Riga · dance & pop",u:"https://live.relaxfm.lv/07",w:"https://mixfm.lv"},
+  {g:"FM stations with dance rotation",n:"Radio TEV",d:"FM · pop & dance",u:"https://stream.radiotev.lv:8443/radiov",w:"https://www.radiotev.lv"},
+  {g:"FM stations with dance rotation",n:"Star FM",d:"FM · pop",u:"https://live.advailo.com/audio/mp3/icecast.audio",w:"https://tv3.lv/starfm/"},
+  {g:"FM stations with dance rotation",n:"Radio 9",d:"Skonto Media · hits",u:"https://streams.radioskonto.lv:8443/radio9",w:"https://skontotev.lv"},
+  {g:"Chill / Lounge",n:"Lounge FM",d:"Riga 99.5 FM · lounge, chillout, downtempo",u:"https://stream.loungefm.lv:8443/lounge",w:"https://loungefm.lv"},
+  {g:"Chill / Lounge",n:"Chillax FM",d:"Skonto Media · chill & relax",u:"https://streams.chillaxfm.lv/chillaxfm",w:"https://chillaxfm.lv"},
+  {g:"Chill / Lounge",n:"Skonto Chill",d:"Radio Skonto chill channel",u:"https://streams.radioskonto.lv:8443/chill",w:"https://skontotev.lv"},
+  {g:"Chill / Lounge",n:"Nordic Chillout Radio",d:"Riga · chillout, downtempo, electronic",u:"https://listen.radioking.com/radio/672094/stream/736489",w:"http://www.nordichilloutradio.com"},
+].map((s,i)=>({id:"lv"+i,name:s.n,url:s.u,homepage:s.w,favicon:"",cc:"LV",tags:s.d,codec:"",bitrate:0,votes:0,clicks:0,group:s.g,curated:true}));
+
+/* ---------- API ---------- */
+const SECURE = location.protocol === "https:";
+const HOSTS = ["de1.api.radio-browser.info","de2.api.radio-browser.info","fi1.api.radio-browser.info","nl1.api.radio-browser.info","at1.api.radio-browser.info"];
+let hostIdx = 0;
+const memCache = new Map();
+const PAGE = 60;
+
+function slim(s){ return {id:s.stationuuid,name:(s.name||"").trim(),url:s.url_resolved||s.url,homepage:s.homepage||"",favicon:s.favicon||"",cc:s.countrycode||"",tags:s.tags||"",codec:s.codec||"",bitrate:+s.bitrate||0,votes:+s.votes||0,clicks:+s.clickcount||0}; }
+
+async function api(path){
+  const key = path;
+  if (memCache.has(key)) return memCache.get(key);
+  try { const c = JSON.parse(localStorage.getItem("rb:"+key)||"null"); if (c && Date.now()-c.t < 12*3600e3) { memCache.set(key,c.d); return c.d; } } catch{}
+  let lastErr;
+  for (let n=0;n<HOSTS.length;n++){
+    const host = HOSTS[(hostIdx+n)%HOSTS.length];
+    try {
+      const ctl = new AbortController(); const t = setTimeout(()=>ctl.abort(), 12000);
+      const r = await fetch("https://"+host+path, {signal:ctl.signal, headers:{"User-Agent":"EuroRadio/2.0"}});
+      clearTimeout(t);
+      if (!r.ok) throw new Error("HTTP "+r.status);
+      const d = (await r.json()).map(slim);
+      hostIdx = (hostIdx+n)%HOSTS.length;
+      memCache.set(key,d);
+      try { if (cacheBytes()>3e6) pruneCache(); localStorage.setItem("rb:"+key, JSON.stringify({t:Date.now(),d})); } catch { pruneCache(); }
+      return d;
+    } catch(e){ lastErr = e; }
+  }
+  throw lastErr || new Error("No API server reachable");
+}
+function cacheBytes(){ try { return Object.keys(localStorage).filter(k=>k.startsWith("rb:")).reduce((a,k)=>a+localStorage.getItem(k).length,0); } catch { return 0; } }
+function pruneCache(){ try { Object.keys(localStorage).filter(k=>k.startsWith("rb:")).forEach(k=>localStorage.removeItem(k)); } catch{} }
+
+async function search({cc, region, style, q, sort}){
+  const st = STYLES.find(s=>s[0]===style) || STYLES[0];
+  const wide = cc==="ALL";
+  const base = new URLSearchParams({hidebroken:"true", order: sort==="name"?"name":sort, reverse: sort==="name"?"false":"true", limit: wide ? (region==="WORLD"?"600":"1500") : "1000"});
+  if (!wide) base.set("countrycode",cc);
+  if (SECURE) base.set("is_https","true");   // hosted over https: browsers block plain-http streams, so don't list them
+  const inRegion = s => region==="WORLD" || REGION_OF[s.cc]===region;
+  if (q) base.set("name",q);
+  const tagSets = st[2].length ? st[2] : [null];
+  const lists = await Promise.all(tagSets.map(tag=>{ const p = new URLSearchParams(base); if (tag) p.set("tag",tag); return api("/json/stations/search?"+p.toString()).catch(()=>[]); }));
+  const seen = new Set(), byName = new Map(); const out=[];
+  for (const l of lists) for (const s of l) {
+    if (seen.has(s.id)) continue; seen.add(s.id);
+    if (wide && !inRegion(s)) continue; if (!s.url) continue;
+    const k = s.cc+"|"+s.name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").trim();
+    const prev = byName.get(k);
+    if (prev) { if (s.votes>prev.votes) { out[out.indexOf(prev)] = s; byName.set(k,s); } continue; }
+    byName.set(k,s); out.push(s);
+  }
+  if (sort==="name") out.sort((a,b)=>a.name.localeCompare(b.name)); else out.sort((a,b)=>b[sort==="clickcount"?"clicks":sort]-a[sort==="clickcount"?"clicks":sort]);
+  return out;
+}
+
+/* ---------- state ---------- */
+const $ = s=>document.querySelector(s);
+const audio=$("#a"), list=$("#list"), playBtn=$("#play"), nowT=$("#nowT"), nowS=$("#nowS"), site=$("#site"), vol=$("#vol"), volv=$("#volv"), q=$("#q"), info=$("#info"), sortSel=$("#sort");
+const store = (k,def)=>{ try { const v = JSON.parse(localStorage.getItem(k)); return v===null||v===undefined?def:v; } catch { return def; } };
+const save = (k,v)=>{ try { localStorage.setItem(k, JSON.stringify(v)); } catch{} };
+let tab = store("tab","browse"), region = store("region","EU"), cc = store("cc","LV"), style = store("style","edm");
+let favs = store("favs2",{}), hidden = store("hidden",{}), recent = store("recent",[]);
+let results = [], shown = PAGE, cur = null, wantPlay=false, loading=false, reqId=0;
+vol.value = store("vol",0.8); audio.volume=+vol.value; volv.textContent=Math.round(vol.value*100)+"%";
+sortSel.value = store("sort","votes");
+
+/* ---------- render ---------- */
+function initials(n){ return n.replace(/[^\p{L}\p{N} ]/gu,"").split(" ").filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join("") || "♪"; }
+function colorFor(s){ let h=0; for (const ch of s) h=(h*31+ch.charCodeAt(0))>>>0; return `hsl(${h%360} 60% 45%)`; }
+
+function chips(){
+  const reg = REGIONS.find(r=>r[0]===region) || REGIONS[0];
+  $("#regions").innerHTML = REGIONS.map(r=>`<span class="chip${r[0]===region?" on":""}" data-rg="${r[0]}">${r[1]} ${r[2]}</span>`).join("");
+  const cs = regionCountries(region);
+  $("#countries").innerHTML = [`<span class="chip${cc==="ALL"?" on":""}" data-cc="ALL">${reg[1]} All ${reg[0]==="WORLD"?"countries":reg[2]}</span>`]
+    .concat(cs.map(c=>`<span class="chip${c===cc?" on":""}" data-cc="${c}" title="${COUNTRY_COUNTS[c]} stations">${flag(c)} ${esc(cname(c))}</span>`)).join("");
+  $("#styles").innerHTML = STYLES.map(s=>`<span class="chip${s[0]===style?" on":""}" data-st="${s[0]}">${s[1]}</span>`).join("");
+  document.querySelectorAll("[data-rg]").forEach(el=>el.onclick=()=>{region=el.dataset.rg;save("region",region);cc="ALL";save("cc",cc);chips();load();});
+  document.querySelectorAll("[data-cc]").forEach(el=>el.onclick=()=>{cc=el.dataset.cc;save("cc",cc);chips();load();});
+  const on = $("#countries .chip.on"); if (on) on.scrollIntoView({block:"nearest",inline:"center"});
+  document.querySelectorAll("[data-st]").forEach(el=>el.onclick=()=>{style=el.dataset.st;save("style",style);chips();load();});
+  document.querySelectorAll("nav .tab").forEach(t=>t.classList.toggle("on",t.dataset.t===tab));
+  const b = tab==="browse"; $("#browseRows").style.display=b?"":"none"; $("#browseBar").style.display=b?"":"none";
+}
+
+function card(s){
+  const c = document.createElement("div");
+  c.className = "card"+(cur&&cur.id===s.id?" active":"")+(hidden[s.id]||(SECURE&&/^http:/i.test(s.url))?" dead":"");
+  c.dataset.id = s.id;
+  const playing = cur&&cur.id===s.id&&!audio.paused;
+  const sub = s.curated ? s.tags : [flag(s.cc)+" "+cname(s.cc), s.codec&&s.bitrate?`${s.codec} ${s.bitrate}k`:s.codec, s.votes?`▲ ${s.votes}`:""].filter(Boolean).join(" · ");
+  c.innerHTML = `<div class="logo" style="background:${colorFor(s.name)}">${s.favicon?`<img src="${s.favicon.replace(/"/g,"")}" alt="" loading="lazy" onerror="this.remove()">`:""}<span>${initials(s.name)}</span></div>
+    <div class="meta"><div class="name">${esc(s.name)}${playing?'<span class="eq"><i></i><i></i><i></i></span>':""}</div><div class="sub">${esc(sub)}</div>${s.curated?"":`<div class="tags">${esc(s.tags)}</div>`}</div>
+    <div class="acts"><span class="fav${favs[s.id]?" on":""}" title="Favourite">★</span><span class="hide" title="Hide (dead stream?)">✕</span></div>`;
+  const img = c.querySelector("img"); if (img) img.onload = ()=>c.querySelector(".logo span").remove();
+  c.onclick = e => {
+    if (e.target.classList.contains("fav")) toggleFav(s);
+    else if (e.target.classList.contains("hide")) { hidden[s.id] ? delete hidden[s.id] : hidden[s.id]=1; save("hidden",hidden); render(); }
+    else play(s);
+  };
+  return c;
+}
+const esc = t => String(t).replace(/[&<>"]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+
+function render(){
+  list.innerHTML = "";
+  let items;
+  if (tab==="lv") {
+    let lastG=null, grid=null;
+    for (const s of CURATED_LV) { if (s.group!==lastG){ lastG=s.group; const h=document.createElement("h2"); h.textContent=s.group; list.appendChild(h); grid=document.createElement("div"); grid.className="grid"; list.appendChild(grid);} grid.appendChild(card(s)); }
+    return;
+  }
+  if (tab==="fav") items = Object.values(favs);
+  else if (tab==="recent") items = recent;
+  else items = results.filter(s=>!hidden[s.id]);
+  $("#clearHidden").hidden = !Object.keys(hidden).length;
+  if (loading) { list.innerHTML = `<div class="empty"><span class="spin"></span>Loading stations…</div>`; return; }
+  if (!items.length) { list.innerHTML = `<div class="empty">${tab==="fav"?"No favourites yet. Click ★ on any station.":tab==="recent"?"Nothing played yet.":"No stations found. Try another style or country."}</div>`; return; }
+  const grid=document.createElement("div"); grid.className="grid"; list.appendChild(grid);
+  items.slice(0, tab==="browse"?shown:9999).forEach(s=>grid.appendChild(card(s)));
+  if (tab==="browse" && items.length>shown) { const b=document.createElement("button"); b.className="more"; b.textContent=`Show more (${items.length-shown} left)`; b.onclick=()=>{shown+=PAGE;render();}; list.appendChild(b); }
+}
+
+async function load(){
+  if (tab!=="browse") { render(); return; }
+  const id=++reqId; loading=true; shown=PAGE; info.textContent=""; render();
+  try {
+    const r = await search({cc, region, style, q:q.value.trim(), sort:sortSel.value});
+    if (id!==reqId) return;
+    results = r; loading=false;
+    info.innerHTML = `<b>${results.length}</b> stations`;
+    render();
+  } catch(e){ if (id!==reqId) return; loading=false; results=[]; render(); list.innerHTML=`<div class="empty">Could not reach the station database (${esc(e.message)}). Check your connection and try again.</div>`; }
+}
+
+/* ---------- player ---------- */
+function toggleFav(s){ favs[s.id] ? delete favs[s.id] : favs[s.id]=s; save("favs2",favs); render(); }
+function play(s){
+  if (cur && cur.id===s.id) { toggle(); return; }
+  if (SECURE && /^http:/i.test(s.url)) { nowT.textContent = s.name; nowS.textContent = "This station only has a plain-http stream, which browsers block on a secure page. Open the downloaded file instead to play it."; nowS.className="s err"; return; }
+  cur = s; wantPlay=true;
+  nowT.textContent = s.name; nowS.textContent="Connecting…"; nowS.className="s";
+  site.hidden=!s.homepage; site.href=s.homepage||"#";
+  document.title = s.name+" · Euro Radio";
+  audio.src = s.url; audio.play().catch(err=>{ nowS.textContent="Could not play: "+err.message; nowS.className="s err"; });
+  playBtn.disabled=false; playBtn.textContent="⏸";
+  recent = [s, ...recent.filter(x=>x.id!==s.id)].slice(0,30); save("recent",recent); save("last",s);
+  if (!s.curated) fetch("https://"+HOSTS[hostIdx]+"/json/url/"+s.id).catch(()=>{});
+  render();
+}
+function toggle(){
+  if (!cur) return;
+  if (audio.paused) { wantPlay=true; audio.src=cur.url; audio.play().catch(()=>{}); playBtn.textContent="⏸"; nowS.textContent="Connecting…"; nowS.className="s"; }
+  else { wantPlay=false; audio.pause(); audio.removeAttribute("src"); audio.load(); playBtn.textContent="▶"; nowS.textContent="Stopped"; }
+  render();
+}
+function step(d){
+  const ids=[...document.querySelectorAll(".card")].map(c=>c.dataset.id); if (!ids.length) return;
+  const all = tab==="lv"?CURATED_LV: tab==="fav"?Object.values(favs): tab==="recent"?recent: results;
+  const pos = cur ? ids.indexOf(cur.id) : -1;
+  const next = ids[(pos+d+ids.length)%ids.length];
+  const s = all.find(x=>x.id===next); if (s) play(s);
+}
+function subline(s){ return s.curated ? s.tags : [flag(s.cc)+" "+cname(s.cc), s.codec&&s.bitrate?`${s.codec} ${s.bitrate}k`:"", s.tags.split(",").slice(0,4).join(", ")].filter(Boolean).join(" · "); }
+audio.addEventListener("playing",()=>{ nowS.textContent="Live · "+subline(cur); nowS.className="s"; playBtn.textContent="⏸"; render(); });
+audio.addEventListener("waiting",()=>{ nowS.textContent="Buffering…"; });
+audio.addEventListener("stalled",()=>{ if (wantPlay) nowS.textContent="Reconnecting…"; });
+audio.addEventListener("error",()=>{ if (!wantPlay) return; nowS.textContent="Stream failed (offline, or an http stream blocked by the browser). Press ✕ on the card to hide it."; nowS.className="s err"; playBtn.textContent="▶"; render(); });
+audio.addEventListener("ended",()=>{ if (wantPlay) { audio.src=cur.url; audio.play().catch(()=>{}); } });
+
+/* ---------- wiring ---------- */
+playBtn.onclick=toggle;
+vol.oninput=()=>{ audio.volume=+vol.value; volv.textContent=Math.round(vol.value*100)+"%"; save("vol",+vol.value); };
+q.addEventListener("keydown",e=>{ if (e.key==="Enter") load(); });
+q.addEventListener("search",load);
+sortSel.onchange=()=>{ save("sort",sortSel.value); load(); };
+$("#clearHidden").onclick=()=>{ hidden={}; save("hidden",hidden); render(); };
+document.querySelectorAll("nav .tab").forEach(t=>t.onclick=()=>{ tab=t.dataset.t; save("tab",tab); chips(); load(); });
+document.addEventListener("keydown",e=>{
+  if (e.target===q || e.target===sortSel) return;
+  if (e.code==="Space"){ e.preventDefault(); toggle(); }
+  else if (e.key==="ArrowUp"){ e.preventDefault(); vol.value=Math.min(1,+vol.value+.05); vol.oninput(); }
+  else if (e.key==="ArrowDown"){ e.preventDefault(); vol.value=Math.max(0,+vol.value-.05); vol.oninput(); }
+  else if (e.key==="ArrowRight") step(1);
+  else if (e.key==="ArrowLeft") step(-1);
+});
+if ("mediaSession" in navigator) {
+  navigator.mediaSession.setActionHandler("play",toggle);
+  navigator.mediaSession.setActionHandler("pause",toggle);
+  navigator.mediaSession.setActionHandler("nexttrack",()=>step(1));
+  navigator.mediaSession.setActionHandler("previoustrack",()=>step(-1));
+  audio.addEventListener("play",()=>{ if (cur) navigator.mediaSession.metadata = new MediaMetadata({title:cur.name, artist:"Euro Radio", album:cur.curated?cur.tags:cname(cur.cc)}); });
+}
+const last = store("last",null);
+if (last) { cur=last; nowT.textContent=last.name; nowS.textContent="Press play to resume"; playBtn.disabled=false; site.hidden=!last.homepage; site.href=last.homepage||"#"; }
+loadCountries().then(()=>{ if (cc!=="ALL" && !COUNTRY_COUNTS[cc]) { cc="ALL"; } if (!REGIONS.some(r=>r[0]===region)) region="EU"; chips(); load(); });
+</script>
+</body>
+</html>
