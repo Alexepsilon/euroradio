@@ -108,7 +108,7 @@ const REGIONS = [
   ["ME","🕌","Middle East","AE BH EG IL IQ IR JO KW LB OM PS QA SA SY TR YE"],
   ["AS","🌏","Asia","AF AM AZ BD BT BN KH CN GE HK IN ID JP KZ KG LA MO MY MV MN MM NP KP KR PK PH SG LK TW TJ TH TL TM UZ VN"],
   ["AF","🌍","Africa","DZ AO BJ BW BF BI CV CM CF TD KM CG CD CI DJ GQ ER SZ ET GA GM GH GN GW KE LS LR LY MG MW ML MR MU YT MA MZ NA NE NG RE RW SH ST SN SC SL SO ZA SS SD TZ TG TN UG EH ZM ZW"],
-  ["OC","🌏","Oceania","AS AU CK FJ PF GU KI MH FM NR NC NZ NU NF MP PW PG PN WS SB TK TO TV UM VU WF"],
+  ["OC","🌏","Oceania","AS AU CK FJ PF GU KI MH FM NR NC NZ NU NF MP PW PG PN WS SB TK TO TV UM VU WF CX CC IO AQ TF HM BV GS"],
   ["WORLD","🌐","Whole world",""],
 ];
 const REGION_OF = {}; REGIONS.forEach(r=>r[3].split(" ").filter(Boolean).forEach(c=>REGION_OF[c]=r[0]));
@@ -122,7 +122,7 @@ async function loadCountries(){
   if (c && Date.now()-c.t < 24*3600e3) { COUNTRY_COUNTS = c.d; return; }
   for (const host of HOSTS) {
     try { const r = await fetch("https://"+host+"/json/countries"); const d = await r.json(); const m = {};
-      d.forEach(x=>{ const code=(x.iso_3166_1||"").toUpperCase(); if (/^[A-Z]{2}$/.test(code) && x.stationcount>=3 && REGION_OF[code]) m[code]=x.stationcount; });
+      d.forEach(x=>{ const code=(x.iso_3166_1||"").toUpperCase(); if (/^[A-Z]{2}$/.test(code) && x.stationcount>=1 && REGION_OF[code]) m[code]=x.stationcount; });
       if (Object.keys(m).length>50) { COUNTRY_COUNTS = m; save("countries",{t:Date.now(),d:m}); return; } } catch {}
   }
   // offline fallback: a minimal list so the UI still works
@@ -155,10 +155,14 @@ const CURATED_LV = [
   {g:"EDM / Dance",n:"gradio.lv ONE",d:"Eurodance, hands up, hard dance, house",u:"https://stream.gradio.lv/gradio-one.mp4a",w:"https://gradio.lv"},
   {g:"EDM / Dance",n:"Mix FM Drum'n'Bass",d:"Mix FM 102.7 online DnB channel",u:"https://my.radioprocessor.com:8100/mixfm8-48.aac",w:"https://mixfm.lv"},
   {g:"EDM / Dance",n:"Xradio",d:"Riga · dance & electronic",u:"https://radio.xradio.vip/stream",w:""},
-  {g:"EDM / Dance",n:"Power FM",d:"Dance / club",u:"http://radio.powerfm.lv:8000/;stream.mp3",w:""},
+  {g:"EDM / Dance",n:"Power FM",d:"Dance / club",u:"https://radio.powerfm.lv:8075/stream",w:""},
   {g:"EDM / Dance",n:"Hero Radio",d:"Latvian online dance station",u:"https://a2.asurahosting.com:6790/latvia.mp3",w:""},
   {g:"EDM / Dance",n:"Radio Talsi · Electronic",d:"Talsi · electronic, 320 kbps",u:"http://kuums.lv:6555/;",w:"http://radio.kuums.lv"},
   {g:"EDM / Dance",n:"Radio Talsi · Future",d:"Talsi · future / electronic, 320 kbps",u:"http://kuums.lv:7555/;",w:"http://radio.kuums.lv"},
+  {g:"EDM / Dance",n:"EHR Fitness",d:"European Hit Radio · workout EDM",u:"https://stream.ehrhiti.lv:8000/Stream_14.aac",w:"https://www.ehr.fm"},
+  {g:"EDM / Dance",n:"Flash Sound",d:"Olaine · dance & electronic",u:"https://listen4.myradio24.com/65462",w:""},
+  {g:"EDM / Dance",n:"Station 2000",d:"Riga · electronic (http only)",u:"http://uk2freenew.listen2myradio.com:6286/stream",w:""},
+  {g:"EDM / Dance",n:"Radio Talsi · Misc",d:"Talsi · mixed electronic, 320 kbps",u:"http://radio.kuums.lv:4555/;",w:"http://radio.kuums.lv"},
   {g:"EDM / Dance",n:"Njoy Radio",d:"Riga · club & dance pop",u:"https://live.njoyradio.lv/02",w:""},
   {g:"EDM / Dance",n:"Your City Radio",d:"Afro house, disco, funk, chillout",u:"https://c34.radioboss.fm:8234/stream",w:"https://yourcityradio.com"},
   {g:"FM stations with dance rotation",n:"TOP Radio",d:"FM nationwide · pop, dance & electronic hits",u:"https://topradio.live.advailo.com/topradio/mp3/icecast.audio",w:"https://tv3.lv/topradio/"},
@@ -170,6 +174,8 @@ const CURATED_LV = [
   {g:"Chill / Lounge",n:"Lounge FM",d:"Riga 99.5 FM · lounge, chillout, downtempo",u:"https://stream.loungefm.lv:8443/lounge",w:"https://loungefm.lv"},
   {g:"Chill / Lounge",n:"Chillax FM",d:"Skonto Media · chill & relax",u:"https://streams.chillaxfm.lv/chillaxfm",w:"https://chillaxfm.lv"},
   {g:"Chill / Lounge",n:"Skonto Chill",d:"Radio Skonto chill channel",u:"https://streams.radioskonto.lv:8443/chill",w:"https://skontotev.lv"},
+  {g:"Chill / Lounge",n:"EHR SuperHits Chillout",d:"European Hit Radio · chillout hits",u:"https://stream.ehrhiti.lv:8000/Stream_81.aac",w:"https://www.ehr.fm"},
+  {g:"Chill / Lounge",n:"Radio Talsi · Lounge",d:"Talsi · lounge, 320 kbps",u:"http://kuums.lv:5555/;",w:"http://radio.kuums.lv"},
   {g:"Chill / Lounge",n:"Nordic Chillout Radio",d:"Riga · chillout, downtempo, electronic",u:"https://listen.radioking.com/radio/672094/stream/736489",w:"http://www.nordichilloutradio.com"},
 ].map((s,i)=>({id:"lv"+i,name:s.n,url:s.u,homepage:s.w,favicon:"",cc:"LV",tags:s.d,codec:"",bitrate:0,votes:0,clicks:0,group:s.g,curated:true}));
 
