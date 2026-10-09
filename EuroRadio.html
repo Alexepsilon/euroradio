@@ -274,7 +274,7 @@ function card(s){
   c.dataset.id = s.id;
   const playing = cur&&cur.id===s.id&&!audio.paused;
   const sub = s.curated ? s.tags : [flag(s.cc)+" "+cname(s.cc), s.codec&&s.bitrate?`${s.codec} ${s.bitrate}k`:s.codec, s.votes?`▲ ${s.votes}`:""].filter(Boolean).join(" · ");
-  c.innerHTML = `<div class="logo" style="background:${colorFor(s.name)}">${s.favicon?`<img src="${s.favicon.replace(/"/g,"")}" alt="" loading="lazy" onerror="this.remove()">`:""}<span>${initials(s.name)}</span></div>
+  c.innerHTML = `<div class="logo" style="background:${colorFor(s.name)}">${s.favicon&&!(SECURE&&/^http:/i.test(s.favicon))?`<img src="${s.favicon.replace(/"/g,"")}" alt="" loading="lazy" onerror="this.remove()">`:""}<span>${initials(s.name)}</span></div>
     <div class="meta"><div class="name">${esc(s.name)}${isHttp?'<span class="badge" title="Plain-http stream: opens in a new tab">http ↗</span>':""}${playing?'<span class="eq"><i></i><i></i><i></i></span>':""}</div><div class="sub">${esc(sub)}</div>${s.curated?"":`<div class="tags">${esc(s.tags)}</div>`}</div>
     <div class="acts"><span class="fav${favs[s.id]?" on":""}" title="Favourite">★</span><span class="hide" title="Hide (dead stream?)">✕</span></div>`;
   const img = c.querySelector("img"); if (img) img.onload = ()=>c.querySelector(".logo span").remove();
