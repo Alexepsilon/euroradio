@@ -90,6 +90,13 @@
   <span class="info" id="info"></span>
   <button class="small" id="clearHidden" hidden>Unhide stations</button>
 </div>
+<div class="bar" id="favBar" hidden>
+  <span class="info" id="favInfo"></span>
+  <button class="small" id="favExport">⬇ Export favourites</button>
+  <button class="small" id="favImport">⬆ Import favourites</button>
+  <button class="small" id="favRestore" hidden>↺ Restore previous favourites</button>
+  <input id="favFile" type="file" accept="application/json,.json" hidden>
+</div>
 <main id="list"></main>
 <footer>
   <button class="btn" id="play" disabled>▶</button>
@@ -265,6 +272,7 @@ function chips(){
   document.querySelectorAll("[data-st]").forEach(el=>el.onclick=()=>{style=el.dataset.st;save("style",style);chips();load();});
   document.querySelectorAll("nav .tab").forEach(t=>t.classList.toggle("on",t.dataset.t===tab));
   const b = tab==="browse"; $("#browseRows").style.display=b?"":"none"; $("#browseBar").style.display=b?"":"none";
+  $("#favBar").hidden = tab!=="fav"; $("#favRestore").hidden = !store("favs2_prev",null); if (tab==="fav") $("#favInfo").textContent = Object.keys(favs).length+" favourite"+(Object.keys(favs).length===1?"":"s");
 }
 
 function card(s){
@@ -319,7 +327,20 @@ async function load(){
 }
 
 /* ---------- player ---------- */
-function toggleFav(s){ favs[s.id] ? delete favs[s.id] : favs[s.id]=s; save("favs2",favs); render(); }
+function saveFavs(){ save("favs2",favs); }
+function toggleFav(s){
+  if (favs[s.id]) { const prev=Object.assign({},favs); delete favs[s.id]; save("favs2_prev",prev); }
+  else favs[s.id]=s;
+  saveFavs(); render();
+}
+function favText(){ return JSON.stringify({app:"EuroRadio",exported:new Date().toISOString(),favourites:Object.values(favs)},null,1); }
+function importFavs(text){
+  let obj; try { obj=JSON.parse(text); } catch { flashMsg("That file is not favourites JSON."); return 0; }
+  const list = Array.isArray(obj) ? obj : Array.isArray(obj.favourites) ? obj.favourites : Object.values(obj);
+  let n=0; for (const st of list) { if (st && st.id && st.url && st.name && !favs[st.id]) { favs[st.id]=st; n++; } }
+  if (n) saveFavs(); render(); flashMsg(n ? `Imported ${n} favourite${n===1?"":"s"}.` : "Nothing new to import."); return n;
+}
+function flashMsg(m){ $("#favInfo").textContent=m; }
 function play(s){
   if (cur && cur.id===s.id) { toggle(); return; }
   if (SECURE && /^http:/i.test(s.url)) {
@@ -366,6 +387,16 @@ q.addEventListener("keydown",e=>{ if (e.key==="Enter") load(); });
 q.addEventListener("search",load);
 sortSel.onchange=()=>{ save("sort",sortSel.value); load(); };
 $("#clearHidden").onclick=()=>{ hidden={}; save("hidden",hidden); render(); };
+$("#favExport").onclick=()=>{
+  const blob=new Blob([favText()],{type:"application/json"}); const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="euroradio-favourites.json"; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  flashMsg(`Saved ${Object.keys(favs).length} favourites to a file.`);
+};
+$("#favImport").onclick=()=>$("#favFile").click();
+$("#favFile").onchange=e=>{ const f=e.target.files[0]; if (!f) return; f.text().then(importFavs); e.target.value=""; };
+$("#favRestore").onclick=()=>{ const prev=store("favs2_prev",null); if (!prev) return; let n=0; for (const k in prev) if (!favs[k]) { favs[k]=prev[k]; n++; } saveFavs(); render(); flashMsg(`Restored ${n} favourite${n===1?"":"s"}.`); };
+(()=>{ const imp=new URLSearchParams(location.search).get("import"); if (!imp) return;
+  try { const txt=decodeURIComponent(escape(atob(imp.replace(/-/g,"+").replace(/_/g,"/")))); tab="fav"; save("tab",tab); importFavs(txt); history.replaceState(null,"",location.pathname); } catch {} })();
 document.querySelectorAll("nav .tab").forEach(t=>t.onclick=()=>{ tab=t.dataset.t; save("tab",tab); chips(); load(); });
 document.addEventListener("keydown",e=>{
   if (e.target===q || e.target===sortSel) return;
