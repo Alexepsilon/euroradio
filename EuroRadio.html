@@ -65,6 +65,7 @@
   a.site{color:var(--muted);font-size:12px;text-decoration:none} a.site:hover{color:var(--accent)}
   .small{background:none;border:1px solid var(--line);color:var(--muted);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px}
   .small:hover{color:var(--text);border-color:var(--accent2)}
+  .badge{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:4px;font-size:10.5px;font-weight:600;color:var(--bg);background:#f0b429;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -74,7 +75,7 @@
 </header>
 <nav>
   <div class="tab on" data-t="browse">Browse</div>
-  <div class="tab" data-t="lv">Curated Latvia</div>
+  <div class="tab" data-t="lv">Curated picks</div>
   <div class="tab" data-t="fav">★ Favourites</div>
   <div class="tab" data-t="recent">Recent</div>
 </nav>
@@ -177,7 +178,9 @@ const CURATED_LV = [
   {g:"Chill / Lounge",n:"EHR SuperHits Chillout",d:"European Hit Radio · chillout hits",u:"https://stream.ehrhiti.lv:8000/Stream_81.aac",w:"https://www.ehr.fm"},
   {g:"Chill / Lounge",n:"Radio Talsi · Lounge",d:"Talsi · lounge, 320 kbps",u:"http://kuums.lv:5555/;",w:"http://radio.kuums.lv"},
   {g:"Chill / Lounge",n:"Nordic Chillout Radio",d:"Riga · chillout, downtempo, electronic",u:"https://listen.radioking.com/radio/672094/stream/736489",w:"http://www.nordichilloutradio.com"},
-].map((s,i)=>({id:"lv"+i,name:s.n,url:s.u,homepage:s.w,favicon:"",cc:"LV",tags:s.d,codec:"",bitrate:0,votes:0,clicks:0,group:s.g,curated:true}));
+  {g:"Mixcult · Russia",n:"MixCult Radio",d:"Deep, minimal, dub techno & house · 256 kbps (http)",u:"http://radio.mixcult.net:8000/MixCult_256kbps",w:"https://mixcult.net"},
+  {g:"Mixcult · Russia",n:"MixCult Ambient (Spitzer)",d:"Ambient sub-label channel · 320 kbps (http)",u:"http://spitzer.mixcult.net:8002/MixCult_Ambient_320kbps",w:"https://mixcult.net"},
+].map((s,i)=>({id:"lv"+i,name:s.n,url:s.u,homepage:s.w,favicon:"",cc:s.g.includes("Russia")?"RU":"LV",tags:s.d,codec:"",bitrate:0,votes:0,clicks:0,group:s.g,curated:true}));
 
 /* ---------- API ---------- */
 const SECURE = location.protocol === "https:";
@@ -217,7 +220,6 @@ async function search({cc, region, style, q, sort}){
   const wide = cc==="ALL";
   const base = new URLSearchParams({hidebroken:"true", order: sort==="name"?"name":sort, reverse: sort==="name"?"false":"true", limit: wide ? (region==="WORLD"?"600":"1500") : "1000"});
   if (!wide) base.set("countrycode",cc);
-  if (SECURE) base.set("is_https","true");   // hosted over https: browsers block plain-http streams, so don't list them
   const inRegion = s => region==="WORLD" || REGION_OF[s.cc]===region;
   if (q) base.set("name",q);
   const tagSets = st[2].length ? st[2] : [null];
@@ -267,12 +269,13 @@ function chips(){
 
 function card(s){
   const c = document.createElement("div");
-  c.className = "card"+(cur&&cur.id===s.id?" active":"")+(hidden[s.id]||(SECURE&&/^http:/i.test(s.url))?" dead":"");
+  const isHttp = SECURE && /^http:/i.test(s.url);
+  c.className = "card"+(cur&&cur.id===s.id?" active":"")+(hidden[s.id]?" dead":"")+(isHttp?" http":"");
   c.dataset.id = s.id;
   const playing = cur&&cur.id===s.id&&!audio.paused;
   const sub = s.curated ? s.tags : [flag(s.cc)+" "+cname(s.cc), s.codec&&s.bitrate?`${s.codec} ${s.bitrate}k`:s.codec, s.votes?`▲ ${s.votes}`:""].filter(Boolean).join(" · ");
   c.innerHTML = `<div class="logo" style="background:${colorFor(s.name)}">${s.favicon?`<img src="${s.favicon.replace(/"/g,"")}" alt="" loading="lazy" onerror="this.remove()">`:""}<span>${initials(s.name)}</span></div>
-    <div class="meta"><div class="name">${esc(s.name)}${playing?'<span class="eq"><i></i><i></i><i></i></span>':""}</div><div class="sub">${esc(sub)}</div>${s.curated?"":`<div class="tags">${esc(s.tags)}</div>`}</div>
+    <div class="meta"><div class="name">${esc(s.name)}${isHttp?'<span class="badge" title="Plain-http stream: opens in a new tab">http ↗</span>':""}${playing?'<span class="eq"><i></i><i></i><i></i></span>':""}</div><div class="sub">${esc(sub)}</div>${s.curated?"":`<div class="tags">${esc(s.tags)}</div>`}</div>
     <div class="acts"><span class="fav${favs[s.id]?" on":""}" title="Favourite">★</span><span class="hide" title="Hide (dead stream?)">✕</span></div>`;
   const img = c.querySelector("img"); if (img) img.onload = ()=>c.querySelector(".logo span").remove();
   c.onclick = e => {
@@ -319,7 +322,13 @@ async function load(){
 function toggleFav(s){ favs[s.id] ? delete favs[s.id] : favs[s.id]=s; save("favs2",favs); render(); }
 function play(s){
   if (cur && cur.id===s.id) { toggle(); return; }
-  if (SECURE && /^http:/i.test(s.url)) { nowT.textContent = s.name; nowS.textContent = "This station only has a plain-http stream, which browsers block on a secure page. Open the downloaded file instead to play it."; nowS.className="s err"; return; }
+  if (SECURE && /^http:/i.test(s.url)) {
+    window.open(s.url, "_blank", "noopener");
+    nowT.textContent = s.name; nowS.textContent = "Opened in a new tab: this station streams over plain http, which can't play inside a secure page. Close that tab to stop it."; nowS.className="s";
+    recent = [s, ...recent.filter(x=>x.id!==s.id)].slice(0,30); save("recent",recent);
+    if (!s.curated) fetch("https://"+HOSTS[hostIdx]+"/json/url/"+s.id).catch(()=>{});
+    return;
+  }
   cur = s; wantPlay=true;
   nowT.textContent = s.name; nowS.textContent="Connecting…"; nowS.className="s";
   site.hidden=!s.homepage; site.href=s.homepage||"#";
