@@ -329,7 +329,7 @@ async function load(){
 /* ---------- player ---------- */
 function saveFavs(){ save("favs2",favs); }
 function toggleFav(s){
-  if (favs[s.id]) { const prev=Object.assign({},favs); delete favs[s.id]; save("favs2_prev",prev); }
+  if (favs[s.id]) { const prev=Object.assign({},favs); delete favs[s.id]; save("favs2_prev",prev); $("#favRestore").hidden=false; }
   else favs[s.id]=s;
   saveFavs(); render();
 }
